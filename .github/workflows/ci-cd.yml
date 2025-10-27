@@ -49,7 +49,6 @@ jobs:
         run: |
           source /etc/profile.d/maven.sh || true
           mvn clean package -DskipTests
-          
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v2
@@ -110,16 +109,16 @@ jobs:
       - name: Notify Slack (✅ Build Success)
         if: success()
         run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":"✅ *Build Succeeded* by `${{ github.actor }}` in `${{ github.event.inputs.environment || 'prod' }}`."}' \
-            ${{ secrets.SLACK_WEBHOOK_URL }}
+          curl -X POST -H "Content-type: application/json" \
+          --data "{\"text\":\"✅ *Build Succeeded* by '${{ github.actor }}' in '${{ github.event.inputs.environment || 'prod' }}'.\"}" \
+          "${{ secrets.SLACK_WEBHOOK_URL }}"
 
       - name: Notify Slack (❌ Build Failed)
         if: failure()
         run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":"❌ *Build Failed* by `${{ github.actor }}` in `${{ github.event.inputs.environment || 'prod' }}`."}' \
-            ${{ secrets.SLACK_WEBHOOK_URL }}
+          curl -X POST -H "Content-type: application/json" \
+          --data "{\"text\":\"❌ *Build Failed* by '${{ github.actor }}' in '${{ github.event.inputs.environment || 'prod' }}'.\"}" \
+          "${{ secrets.SLACK_WEBHOOK_URL }}"
 
   deploy:
     name: Deploy to EKS
@@ -132,9 +131,9 @@ jobs:
 
       - name: Notify Slack (🚀 Starting Deployment)
         run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":"🚀 *Deployment started* in `${{ github.event.inputs.environment || 'prod' }}`."}' \
-            ${{ secrets.SLACK_WEBHOOK_URL }}
+          curl -X POST -H "Content-type: application/json" \
+          --data "{\"text\":\"🚀 *Deployment started* in '${{ github.event.inputs.environment || 'prod' }}'.\"}" \
+          "${{ secrets.SLACK_WEBHOOK_URL }}"
 
       - name: Configure kubectl via AWS CLI
         run: |
@@ -183,13 +182,14 @@ jobs:
       - name: Notify Slack (✅ Deploy Success)
         if: success()
         run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":"✅ *Deployment Successful* to `${{ github.event.inputs.environment || 'prod' }}` by `${{ github.actor }}`."}' \
-            ${{ secrets.SLACK_WEBHOOK_URL }}
+          curl -X POST -H "Content-type: application/json" \
+          --data "{\"text\":\"✅ *Deployment Successful* to '${{ github.event.inputs.environment || 'prod' }}' by '${{ github.actor }}'.\"}" \
+          "${{ secrets.SLACK_WEBHOOK_URL }}"
 
       - name: Notify Slack (🔥 Deploy Failed)
         if: failure()
         run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":"🔥 *Deployment FAILED* to `${{ github.event.inputs.environment || 'prod' }}`."}' \
-            ${{ secrets.SLACK_WEBHOOK_URL }}
+          curl -X POST -H "Content-type: application/json" \
+          --data "{\"text\":\"🔥 *Deployment FAILED* to '${{ github.event.inputs.environment || 'prod' }}'.\"}" \
+          "${{ secrets.SLACK_WEBHOOK_URL }}"
+
