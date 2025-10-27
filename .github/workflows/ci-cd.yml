@@ -24,7 +24,7 @@ on:
 
 env:
   AWS_REGION: us-east-2
-  AWS_ACCOUNT_ID: 418272782718
+  AWS_ACCOUNT_ID: 327019199684
   ECR_REPO: fintech-app
 
 jobs:
@@ -49,7 +49,7 @@ jobs:
         run: |
           source /etc/profile.d/maven.sh || true
           mvn clean package -DskipTests
-
+          
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v2
         env:
@@ -106,12 +106,21 @@ jobs:
           docker container prune -f || true
           docker volume prune -f || true
 
-      - name: Notify Slack (✅ Build Success)
+      - name: GitHub Summary (Build Success)
         if: success()
         run: |
-          curl -X POST -H "Content-type: application/json" \
-          --data "{\"text\":\"✅ *Build Succeeded* by '${{ github.actor }}' in '${{ github.event.inputs.environment || 'prod' }}'.\"}" \
-          "${{ secrets.SLACK_WEBHOOK_URL }}"
+          IMAGE_TAG=${{ steps.set-tag.outputs.image-tag }}
+          echo "## ✅ Build Successful
+**Actor:** $GITHUB_ACTOR
+**Environment:** ${GITHUB_EVENT_INPUTS_ENVIRONMENT:-prod}
+**Image Tag:** $IMAGE_TAG" >> $GITHUB_STEP_SUMMARY
+
+      - name: GitHub Summary (Build Failed)
+        if: failure()
+        run: |
+          echo "## ❌ Build Failed
+**Actor:** $GITHUB_ACTOR
+**Environment:** ${GITHUB_EVENT_INPUTS_ENVIRONMENT:-prod}" >> $GITHUB_STEP_SUMMARY
 
   deploy:
     name: Deploy to EKS
@@ -122,11 +131,12 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
 
-      - name: Notify Slack (🚀 Starting Deployment)
+      - name: GitHub Summary (Deployment Started)
         run: |
-          curl -X POST -H "Content-type: application/json" \
-          --data "{\"text\":\"🚀 *Deployment started* in '${{ github.event.inputs.environment || 'prod' }}'.\"}" \
-          "${{ secrets.SLACK_WEBHOOK_URL }}"
+          CLUSTER_NAME=${{ github.event.inputs.environment || 'prod' }}-dominion-cluster
+          echo "## 🚀 Deployment Started
+**Cluster:** $CLUSTER_NAME
+**Actor:** $GITHUB_ACTOR" >> $GITHUB_STEP_SUMMARY
 
       - name: Configure kubectl via AWS CLI
         run: |
@@ -172,9 +182,21 @@ jobs:
 
           kubectl apply -k "$OVERLAY_DIR"
 
-      - name: Notify Slack (✅ Deploy Success)
+      - name: GitHub Summary (Deploy Success)
         if: success()
         run: |
-          curl -X POST -H "Content-type: application/json" \
-          --data "{\"text\":\"✅ *Deployment Successful* to '${{ github.event.inputs.environment || 'prod' }}' by '${{ github.actor }}'.\"}" \
-          "${{ secrets.SLACK_WEBHOOK_URL }}"
+          ENV=${{ github.event.inputs.environment || 'prod' }}
+          IMAGE_TAG=${{ needs.build-and-push.outputs.image-tag }}
+          IMAGE_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
+          echo "## ✅ Deployment Successful
+**Environment:** $ENV
+**Image:** $IMAGE_URI
+**Actor:** $GITHUB_ACTOR" >> $GITHUB_STEP_SUMMARY
+
+      - name: GitHub Summary (Deploy Failed)
+        if: failure()
+        run: |
+          ENV=${{ github.event.inputs.environment || 'prod' }}
+          echo "## ❌ Deployment FAILED
+**Environment:** $ENV
+**Actor:** $GITHUB_ACTOR" >> $GITHUB_STEP_SUMMARY
