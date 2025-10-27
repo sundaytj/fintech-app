@@ -113,13 +113,6 @@ jobs:
           --data "{\"text\":\"✅ *Build Succeeded* by '${{ github.actor }}' in '${{ github.event.inputs.environment || 'prod' }}'.\"}" \
           "${{ secrets.SLACK_WEBHOOK_URL }}"
 
-      - name: Notify Slack (❌ Build Failed)
-        if: failure()
-        run: |
-          curl -X POST -H "Content-type: application/json" \
-          --data "{\"text\":\"❌ *Build Failed* by '${{ github.actor }}' in '${{ github.event.inputs.environment || 'prod' }}'.\"}" \
-          "${{ secrets.SLACK_WEBHOOK_URL }}"
-
   deploy:
     name: Deploy to EKS
     runs-on: self-hosted
@@ -185,11 +178,3 @@ jobs:
           curl -X POST -H "Content-type: application/json" \
           --data "{\"text\":\"✅ *Deployment Successful* to '${{ github.event.inputs.environment || 'prod' }}' by '${{ github.actor }}'.\"}" \
           "${{ secrets.SLACK_WEBHOOK_URL }}"
-
-      - name: Notify Slack (🔥 Deploy Failed)
-        if: failure()
-        run: |
-          curl -X POST -H "Content-type: application/json" \
-          --data "{\"text\":\"🔥 *Deployment FAILED* to '${{ github.event.inputs.environment || 'prod' }}'.\"}" \
-          "${{ secrets.SLACK_WEBHOOK_URL }}"
-
