@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  namespace: fintech
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+      - name: fintech-app
+        image: 418272782718.dkr.ecr.us-east-2.amazonaws.com/fintech-app:1.0.0
